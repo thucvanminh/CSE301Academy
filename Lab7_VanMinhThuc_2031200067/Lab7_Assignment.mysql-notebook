@@ -1,0 +1,261 @@
+{
+    "type": "MySQLNotebook",
+    "version": "1.0",
+    "caption": "DB Notebook",
+    "content": "\\about\nuse salemanagement;\nSELECT * from clients;\n\n-- 1. SQL statement returns the cities (only distinct values) from both the \"Clients\" and the \"salesman\" \n-- table. \n\nSELECT city from clients\nUNION  \nSELECT city from salesman;\n\n-- 2. SQL statement returns the cities (duplicate values also) both the \"Clients\" and the \"salesman\" table. \n\nSELECT city from salesman \nUNION ALL\nselect city from clients;\n\n-- 3. SQL statement returns the Ho Chi Minh cities (only distinct values) from the \"Clients\" and the \n-- \"salesman\" table.\nSELECT Client_Name from clients\nWHERE city = 'Ho Chi Minh'\nUNION\nSELECT salesman_name from salesman\nWHERE city = 'Ho Chi Minh';\n\n-- 4. SQL statement returns the Ho Chi Minh cities (duplicate values also) from the \"Clients\" and the \n-- \"salesman\" table.\nSELECT Client_Name from clients\nWHERE city = 'Ho Chi Minh'\nUNION all\nSELECT salesman_name from salesman\nWHERE city = 'Ho Chi Minh';\n\n-- 5. SQL statement lists all Clients and salesman.\nSELECT client_name as 'Name', 'client' as 'type' from clients\nUNION ALL\nSELECT salesman_name as 'Name', 'salesman' as 'type' from salesman;\n\n\n-- 6. Write a SQL query to find all salesman and clients located in the city of Ha Noi on a table with \n-- information: ID, Name, City and Type. \n\n(SELECT  Client_Number as ID, Client_Name AS `name`, 'client' as `type` \nfrom clients\nWHERE City = 'Hanoi'\nUNION ALL\nSELECT Salesman_Number as ID, Salesman_Name as `name`, 'salesman' as `type`\nfrom salesman\nWHERE City = 'Hanoi');\n\n-- 7. Write a SQL query to find those salesman and clients who have placed more than one order. Return \n-- ID, name and order by ID.\n\nSELECT so.Salesman_Number as ID, s.Salesman_Name as 'Name','Sale Man' as 'Type'\nfrom salesorder so INNER JOIN salesman s on so.salesman_number = s.salesman_number\nGROUP by s.salesman_number\nHAVING COUNT(*)>1\nunion all \nSELECT so.Client_Number as ID, c.Client_Name as 'Name','Client' as 'Type'\nfrom salesorder so INNER JOIN clients c on so.client_number = c.client_number\nGROUP by c.client_number\nHAVING COUNT(*)>1\nORDER BY ID;\n\n-- 8. Retrieve Name, Order Number (order by order number) and Type of client or salesman with the client \n-- names who placed orders and the salesman names who processed those orders. \n\nSELECT so.Order_Number, c.Client_Name, s.Salesman_Name from salesorder so\nINNER JOIN clients c on so.client_number = c.client_number\nINNER JOIN salesman s on so.salesman_number = s.salesman_number\norder BY Order_Number;\n-- 9. Write a SQL query to create a union of two queries that shows the salesman, cities, and \n-- target_Achieved of all salesmen. Those with a target of 60 or greater will have the words 'High \n-- Achieved', while the others will have the words 'Low Achieved'. \n\nSELECT Salesman_Number, Salesman_Name, City, Target_Achieved, case WHEN Target_Achieved >60 then 'High Achieved'\n end 'Mark' from salesman\n WHERE Target_Achieved >60\n UNION\n SELECT Salesman_Number, Salesman_Name, City, Target_Achieved, case WHEN Target_Achieved <=60 then 'Low Achieved'\n end 'Mark' from salesman\n WHERE Target_Achieved <=60\n ORDER BY Salesman_Number;\n\n -- 10. Write query to creates lists all products (Product_Number AS ID, Product_Name AS Name, \n-- Quantity_On_Hand AS Quantity) and their stock status. Products with a positive quantity in stock are \n-- labeled as 'More 5 pieces in Stock'. Products with zero quantity are labeled as ‘Less 5 pieces in Stock'.\n\nSELECT Product_Number as ID, Product_Name as 'Name', Quantity_On_Hand as 'Quantity' , \ncase when Quantity_On_Hand>=0 then 'More 5 pieces in Stock' ELSE\n'Less 5 pieces in Stock' end 'Stock Status'  from product\n;\n\n-- 11. Create a procedure stores get_clients _by_city () saves the all Clients in table. Then Call procedure stores.\n\n    delimiter //\n    CREATE PROCEDURE get_clients_by_city(IN cityin VARCHAR (30))\n    BEGIN\n        SELECT * from clients\n        WHERE city = cityin;\n    END //\n    delimiter ;\n\n    \n\n",
+    "options": {
+        "tabSize": 4,
+        "indentSize": 4,
+        "insertSpaces": true,
+        "defaultEOL": "LF",
+        "trimAutoWhitespace": true
+    },
+    "viewState": {
+        "cursorState": [
+            {
+                "inSelectionMode": false,
+                "selectionStart": {
+                    "lineNumber": 93,
+                    "column": 1
+                },
+                "position": {
+                    "lineNumber": 93,
+                    "column": 1
+                }
+            }
+        ],
+        "viewState": {
+            "scrollLeft": 0,
+            "firstPosition": {
+                "lineNumber": 84,
+                "column": 1
+            },
+            "firstPositionDeltaTop": -23
+        },
+        "contributionsState": {
+            "editor.contrib.folding": {},
+            "editor.contrib.wordHighlighter": false
+        }
+    },
+    "contexts": [
+        {
+            "state": {
+                "start": 1,
+                "end": 1,
+                "language": "mysql",
+                "currentSet": 1,
+                "statements": [
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 0,
+                            "length": 6
+                        },
+                        "contentStart": 0,
+                        "state": 0
+                    }
+                ]
+            },
+            "data": []
+        },
+        {
+            "state": {
+                "start": 2,
+                "end": 105,
+                "language": "mysql",
+                "result": {
+                    "type": "text",
+                    "text": [
+                        {
+                            "type": 0,
+                            "index": 0,
+                            "content": "MySQL Error (1064): ClassicSession.run_sql: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '//' at line 5",
+                            "language": "ansi"
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": ""
+                    }
+                },
+                "currentHeight": 72,
+                "currentSet": 1,
+                "statements": [
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 0,
+                            "length": 19
+                        },
+                        "contentStart": 0,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 19,
+                            "length": 23
+                        },
+                        "contentStart": 20,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 42,
+                            "length": 179
+                        },
+                        "contentStart": 162,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 221,
+                            "length": 174
+                        },
+                        "contentStart": 333,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 395,
+                            "length": 252
+                        },
+                        "contentStart": 520,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 647,
+                            "length": 257
+                        },
+                        "contentStart": 773,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 904,
+                            "length": 193
+                        },
+                        "contentStart": 958,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 1097,
+                            "length": 379
+                        },
+                        "contentStart": 1247,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 1476,
+                            "length": 562
+                        },
+                        "contentStart": 1612,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 2038,
+                            "length": 407
+                        },
+                        "contentStart": 2226,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 2445,
+                            "length": 632
+                        },
+                        "contentStart": 2710,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 3077,
+                            "length": 524
+                        },
+                        "contentStart": 3390,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": "//",
+                        "span": {
+                            "start": 3601,
+                            "length": 136
+                        },
+                        "contentStart": 3725,
+                        "state": 4
+                    },
+                    {
+                        "delimiter": "//",
+                        "span": {
+                            "start": 3737,
+                            "length": 145
+                        },
+                        "contentStart": 3742,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": "//",
+                        "span": {
+                            "start": 3882,
+                            "length": 5
+                        },
+                        "contentStart": 3881,
+                        "state": 3
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 3887,
+                            "length": 11
+                        },
+                        "contentStart": 3887,
+                        "state": 4
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 3898,
+                            "length": 8
+                        },
+                        "contentStart": 3897,
+                        "state": 3
+                    }
+                ]
+            },
+            "data": []
+        },
+        {
+            "state": {
+                "start": 106,
+                "end": 106,
+                "language": "mysql",
+                "currentSet": 1,
+                "statements": [
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 0,
+                            "length": 0
+                        },
+                        "contentStart": 0,
+                        "state": 0
+                    }
+                ]
+            },
+            "data": []
+        }
+    ]
+}

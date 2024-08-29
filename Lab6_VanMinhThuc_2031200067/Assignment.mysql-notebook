@@ -1,0 +1,828 @@
+{
+    "type": "MySQLNotebook",
+    "version": "1.0",
+    "caption": "DB Notebook",
+    "content": "\\about\nuse salemanagement;\n\n#1. How to check constraint in a table?\nSELECT *\nFROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS\nWHERE TABLE_NAME = 'product';\n\n#2. Create a separate table name as “ProductCost” from “Product” table, which contains the information \n#about product name and its buying price. \ncreate table ProductCost (\n\tProduct_name varchar(25) not null,\n    Cost_price decimal(15,4),\n\tprimary key (product_name)\n);\n\n#3. Compute the profit percentage for all products. Note: profit = (sell-cost)/cost*100\nalter table product add column profit float;\nupdate product set profit = (sell_price - cost_price)/cost_price * 100;\n\n#4. If a salesman exceeded his sales target by more than equal to 75%, his remarks should be ‘Good’.\nselect *, case when target_achieved/sales_target >= 0.75 then 'Good' end 'Remark'\nfrom salesman;\n\n#5. If a salesman does not reach more than 75% of his sales objective, he is labeled as 'Average'.\nselect *, case when target_achieved/sales_target < 0.75 then 'Average' end 'Remark' from salesman;\n\n#6. If a salesman does not meet more than half of his sales objective, he is considered 'Poor'.\nselect *, case when target_achieved < Sales_target/2 then 'Poor' end 'Remark' from salesman;\n\n#7. Find the total quantity for each product. (Query)\nselect *, (Quantity_On_hand + Quantity_Sell) total_quantity from product;\n\n#8. Add a new column and find the total quantity for each product.\nalter table product add column total_quantity int;\nupdate product set total_quantity = Quantity_On_hand + Quantity_Sell;\n\n\n#9. If the Quantity on hand for each product is more than 10, change the discount rate to 10 otherwise set to 5.\nselect *, case when quantity_on_hand > 10 then 10 else 5 end 'Discount_rate%'\nfrom product;\n\n#10. If the Quantity on hand for each product is more than equal to 20, change the discount rate to 10, if it is \n#between 10 and 20 then change to 5, if it is more than 5 then change to 3 otherwise set to 0.\nselect *, case when quantity_on_hand > 20 then 10 else\n\t\t  case when Quantity_On_hand > 10 then 5 else\n          case when Quantity_On_hand > 5 then 3 else 0 end end end 'Discount_rate'\nfrom product;\n\n#11. The first number of pin code in the client table should be start with 7.\nalter table clients add constraint check (pincode like '7%');\n\n#12. Creates a view name as clients_view that shows all customers information from Thu Dau Mot.\ncreate or replace view clients_view as select * from clients\nwhere city = 'Thu Dau Mot';\n\n#13. Drop the “client_view”.\ndrop view if exists clients_view;\n\n#14. Creates a view name as clients_order that shows all clients and their order details from Thu Dau Mot.\ncreate or replace view clients_order as \n(select c.*, so.Order_Number, so.Delivery_date, so.Salesman_Number from clients c \ninner join salesorder so on so.Client_number = c.Client_number\nwhere c.city = 'Thu Dau Mot');\nselect * from clients_order;\n#15. Creates a view that selects every product in the \"Products\" table with a sell price higher than the average \n#sell price.\ncreate or replace view AboveAvgProduct as \n(select * from product where Sell_Price > (select avg(Sell_Price) from product));\nselect * from AboveAvgProduct;\n\n#16. Creates a view name as salesman_view that show all salesman information and products (product names, \n#product price, quantity order) were sold by them.\ncreate or replace view salesman_view as \n(select sm.*, p.product_name, p.sell_price, sod.Order_Quantity from salesman sm\ninner join salesorder so on so.Salesman_Number = sm.Salesman_Number\ninner join salesorderdetails sod on sod.Order_Number = so.Order_Number\ninner join product p on sod.Product_Number = p.Product_Number);\nselect * from salesman_view;\n\n#17. Creates a view name as sale_view that show all salesman information and product (product names, \n#product price, quantity order) were sold by them with order_status = 'Successful'.\ncreate or replace view sale_view as \n(select sm.*, p.product_name, p.sell_price, sod.Order_Quantity from salesman sm\ninner join salesorder so on so.Salesman_Number = sm.Salesman_Number\ninner join salesorderdetails sod on sod.Order_Number = so.Order_Number\ninner join product p on sod.Product_Number = p.Product_Number\nwhere so.Order_status = 'Successful');\nselect * from sale_view;\n\n#18. Creates a view name as sale_amount_view that show all salesman information and sum order quantity \n#of product greater than and equal 20 pieces were sold by them with order_status = 'Successful'.\ncreate or replace view sale_amount_view as \n(select sm.*, sum(Order_Quantity) total_order_quantity from salesman sm\ninner join salesorder so on so.Salesman_Number = sm.Salesman_Number\ninner join salesorderdetails sod on sod.Order_Number = so.Order_Number\ninner join product p on sod.Product_Number = p.Product_Number\nwhere so.Order_status = 'Successful'\ngroup by sm.Salesman_Number\nhaving total_order_quantity >= 20);\n\n#19. Amount paid and amounted due should not be negative when you are inserting the data. \nalter table clients add constraint check (amount_paid >= 0 and amount_due >= 0);\n\n#20. Remove the constraint from pincode;\nalter table clients drop constraint clients_chk_1;\n\n#21. The sell price and cost price should be unique.\nalter table product add constraint unique (sell_price);\nalter table product add constraint unique (cost_price);\n\n#22. The sell price and cost price should not be unique.\nalter table product drop constraint sell_price;\nalter table product drop constraint cost_price;\n\n#23. Remove unique constraint from product name.\nalter table product drop constraint product_name;\n\n#24. Update the delivery status to “Delivered” for the product number P1007.\nupdate salesorder set delivery_status = 'Delivered'\nwhere order_number in (select order_number from salesorderdetails \nwhere Product_Number = 'P1007');\n#25. Change address and city to ‘Phu Hoa’ and ‘Thu Dau Mot’ where client number is C104.\nupdate clients set address = 'Phu Hoa', city = 'Thu Dau Mot'\nwhere client_number = 'C104';\n\n#26. Add a new column to “Product” table named as “Exp_Date”, data type is Date.\nalter table product add column Exp_Date date;\n\n#27. Add a new column to “Clients” table named as “Phone”, data type is varchar and size is 15.\nalter table clients add column Phone varchar(15);\n\n#28. Update remarks as “Good” for all salesman.\nalter table salesman add column Remark varchar(10);\nupdate salesman set remark = 'Good';\n\n#29. Change remarks to \"bad\" whose salesman number is \"S004\".\nupdate salesman set remark = 'Bad' \nwhere salesman_number = 'S004';\n\n#30. Modify the data type of “Phone” in “Clients” table with varchar from size 15 to size is 10.\nalter table clients modify phone varchar(10);\n\n#31. Delete the “Phone” column from “Clients” table.\nalter table clients drop column phone;\n\n#32. alter table Clients drop column Phone;\nalter table clients drop column phone;\n\n#33. Change the sell price of Mouse to 120.\nupdate product set sell_price = 120\nwhere product_name = 'Mouse';\n\n#34. Change the city of client number C104 to “Ben Cat”.\nupdate clients set city = 'Ben Cat'\nwhere client_number = 'C104';\n\n#35. If On_Hand_Quantity greater than 5, then 10% discount. If On_Hand_Quantity greater than 10, then 15% \n#discount. Othrwise, no discount\n\nselect *, case when quantity_on_hand > 5 then '10%' else\n\t\t  case when Quantity_On_hand > 10 then '15%' else '0%' end end 'Discount_rate'\nfrom product;",
+    "options": {
+        "tabSize": 4,
+        "indentSize": 4,
+        "insertSpaces": true,
+        "defaultEOL": "LF",
+        "trimAutoWhitespace": true
+    },
+    "viewState": {
+        "cursorState": [
+            {
+                "inSelectionMode": false,
+                "selectionStart": {
+                    "lineNumber": 32,
+                    "column": 74
+                },
+                "position": {
+                    "lineNumber": 32,
+                    "column": 74
+                }
+            }
+        ],
+        "viewState": {
+            "scrollLeft": 0,
+            "firstPosition": {
+                "lineNumber": 139,
+                "column": 1
+            },
+            "firstPositionDeltaTop": -11
+        },
+        "contributionsState": {
+            "editor.contrib.folding": {},
+            "editor.contrib.wordHighlighter": false
+        }
+    },
+    "contexts": [
+        {
+            "state": {
+                "start": 1,
+                "end": 1,
+                "language": "mysql",
+                "currentSet": 1,
+                "statements": [
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 0,
+                            "length": 6
+                        },
+                        "contentStart": 0,
+                        "state": 0
+                    }
+                ]
+            },
+            "data": []
+        },
+        {
+            "state": {
+                "start": 2,
+                "end": 163,
+                "language": "mysql",
+                "result": {
+                    "type": "resultIds",
+                    "list": [
+                        "225cb185-9768-40da-87e4-2e1a528ac50d"
+                    ]
+                },
+                "currentHeight": 36,
+                "currentSet": 1,
+                "statements": [
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 0,
+                            "length": 19
+                        },
+                        "contentStart": 0,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 19,
+                            "length": 122
+                        },
+                        "contentStart": 61,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 141,
+                            "length": 272
+                        },
+                        "contentStart": 290,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 413,
+                            "length": 134
+                        },
+                        "contentStart": 503,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 547,
+                            "length": 72
+                        },
+                        "contentStart": 548,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 619,
+                            "length": 199
+                        },
+                        "contentStart": 722,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 818,
+                            "length": 199
+                        },
+                        "contentStart": 919,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 1017,
+                            "length": 190
+                        },
+                        "contentStart": 1115,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 1207,
+                            "length": 129
+                        },
+                        "contentStart": 1263,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 1336,
+                            "length": 119
+                        },
+                        "contentStart": 1405,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 1455,
+                            "length": 70
+                        },
+                        "contentStart": 1456,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 1525,
+                            "length": 207
+                        },
+                        "contentStart": 1641,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 1732,
+                            "length": 410
+                        },
+                        "contentStart": 1943,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 2142,
+                            "length": 141
+                        },
+                        "contentStart": 2222,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 2283,
+                            "length": 186
+                        },
+                        "contentStart": 2381,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 2469,
+                            "length": 64
+                        },
+                        "contentStart": 2501,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 2533,
+                            "length": 326
+                        },
+                        "contentStart": 2642,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 2859,
+                            "length": 29
+                        },
+                        "contentStart": 2860,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 2888,
+                            "length": 252
+                        },
+                        "contentStart": 3016,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 3140,
+                            "length": 31
+                        },
+                        "contentStart": 3141,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 3171,
+                            "length": 483
+                        },
+                        "contentStart": 3331,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 3654,
+                            "length": 29
+                        },
+                        "contentStart": 3655,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 3683,
+                            "length": 544
+                        },
+                        "contentStart": 3871,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 4227,
+                            "length": 25
+                        },
+                        "contentStart": 4228,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 4252,
+                            "length": 620
+                        },
+                        "contentStart": 4455,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 4872,
+                            "length": 173
+                        },
+                        "contentStart": 4965,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 5045,
+                            "length": 93
+                        },
+                        "contentStart": 5088,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 5138,
+                            "length": 110
+                        },
+                        "contentStart": 5193,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 5248,
+                            "length": 56
+                        },
+                        "contentStart": 5249,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 5304,
+                            "length": 106
+                        },
+                        "contentStart": 5363,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 5410,
+                            "length": 48
+                        },
+                        "contentStart": 5411,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 5458,
+                            "length": 100
+                        },
+                        "contentStart": 5509,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 5558,
+                            "length": 230
+                        },
+                        "contentStart": 5637,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 5788,
+                            "length": 180
+                        },
+                        "contentStart": 5878,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 5968,
+                            "length": 128
+                        },
+                        "contentStart": 6051,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 6096,
+                            "length": 147
+                        },
+                        "contentStart": 6194,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 6243,
+                            "length": 101
+                        },
+                        "contentStart": 6293,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 6344,
+                            "length": 37
+                        },
+                        "contentStart": 6345,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 6381,
+                            "length": 131
+                        },
+                        "contentStart": 6445,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 6512,
+                            "length": 144
+                        },
+                        "contentStart": 6611,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 6656,
+                            "length": 93
+                        },
+                        "contentStart": 6711,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 6749,
+                            "length": 84
+                        },
+                        "contentStart": 6795,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 6833,
+                            "length": 111
+                        },
+                        "contentStart": 6879,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 6944,
+                            "length": 124
+                        },
+                        "contentStart": 7003,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 7068,
+                            "length": 294
+                        },
+                        "contentStart": 7211,
+                        "state": 0
+                    },
+                    {
+                        "delimiter": ";",
+                        "span": {
+                            "start": 7362,
+                            "length": 0
+                        },
+                        "contentStart": 7361,
+                        "state": 3
+                    }
+                ]
+            },
+            "data": [
+                {
+                    "tabId": "f75c6eb8-133a-45f3-b8dd-cd2f2cc7f768",
+                    "resultId": "225cb185-9768-40da-87e4-2e1a528ac50d",
+                    "rows": [
+                        {
+                            "0": "P1001",
+                            "1": "TV",
+                            "2": 10,
+                            "3": 30,
+                            "4": "900.0000",
+                            "5": "800.0000",
+                            "6": 12.5,
+                            "7": 40,
+                            "8": 5,
+                            "9": null,
+                            "10": 40
+                        },
+                        {
+                            "0": "P1002",
+                            "1": "Laptop",
+                            "2": 12,
+                            "3": 25,
+                            "4": "1275.0000",
+                            "5": "1100.0000",
+                            "6": 15.9091,
+                            "7": 37,
+                            "8": 5,
+                            "9": null,
+                            "10": 37
+                        },
+                        {
+                            "0": "P1003",
+                            "1": "AC",
+                            "2": 23,
+                            "3": 10,
+                            "4": "340.0000",
+                            "5": "300.0000",
+                            "6": 13.3333,
+                            "7": 33,
+                            "8": 10,
+                            "9": null,
+                            "10": 33
+                        },
+                        {
+                            "0": "P1004",
+                            "1": "Modem",
+                            "2": 30,
+                            "3": 35,
+                            "4": "212.5000",
+                            "5": "230.0000",
+                            "6": -7.6087,
+                            "7": 65,
+                            "8": 10,
+                            "9": null,
+                            "10": 65
+                        },
+                        {
+                            "0": "P1005",
+                            "1": "Pen",
+                            "2": 19,
+                            "3": 13,
+                            "4": "10.2000",
+                            "5": "8.0000",
+                            "6": 27.5,
+                            "7": 32,
+                            "8": 5,
+                            "9": null,
+                            "10": 32
+                        },
+                        {
+                            "0": "P1006",
+                            "1": "Mouse",
+                            "2": 5,
+                            "3": 10,
+                            "4": "120.0000",
+                            "5": "105.0000",
+                            "6": 14.2857,
+                            "7": 15,
+                            "8": 5,
+                            "9": null,
+                            "10": 15
+                        },
+                        {
+                            "0": "P1007",
+                            "1": "Keyboard",
+                            "2": 45,
+                            "3": 60,
+                            "4": "102.0000",
+                            "5": "90.0000",
+                            "6": 13.3333,
+                            "7": 105,
+                            "8": 10,
+                            "9": null,
+                            "10": 105
+                        },
+                        {
+                            "0": "P1008",
+                            "1": "Headset",
+                            "2": 63,
+                            "3": 75,
+                            "4": "42.5000",
+                            "5": "40.0000",
+                            "6": 6.25,
+                            "7": 138,
+                            "8": 10,
+                            "9": null,
+                            "10": 138
+                        }
+                    ],
+                    "columns": [
+                        {
+                            "title": "Product_Number",
+                            "field": "0",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": true,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "Product_Name",
+                            "field": "1",
+                            "dataType": {
+                                "type": 17,
+                                "characterMaximumLength": 65535,
+                                "flags": [
+                                    "BINARY",
+                                    "ASCII",
+                                    "UNICODE"
+                                ],
+                                "needsQuotes": true,
+                                "parameterFormatType": "OneOrZero"
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "Quantity_On_Hand",
+                            "field": "2",
+                            "dataType": {
+                                "type": 4,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "Quantity_Sell",
+                            "field": "3",
+                            "dataType": {
+                                "type": 4,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "Sell_Price",
+                            "field": "4",
+                            "dataType": {
+                                "type": 10,
+                                "flags": [
+                                    "UNSIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 65,
+                                "numericScale": 30,
+                                "parameterFormatType": "TwoOrOneOrZero",
+                                "synonyms": [
+                                    "FIXED",
+                                    "NUMERIC",
+                                    "DEC"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "Cost_Price",
+                            "field": "5",
+                            "dataType": {
+                                "type": 10,
+                                "flags": [
+                                    "UNSIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 65,
+                                "numericScale": 30,
+                                "parameterFormatType": "TwoOrOneOrZero",
+                                "synonyms": [
+                                    "FIXED",
+                                    "NUMERIC",
+                                    "DEC"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "profit",
+                            "field": "6",
+                            "dataType": {
+                                "type": 7,
+                                "flags": [
+                                    "UNSIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 53,
+                                "numericScale": 30,
+                                "parameterFormatType": "TwoOrOneOrZero",
+                                "synonyms": [
+                                    "FLOAT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "Total_Quantity",
+                            "field": "7",
+                            "dataType": {
+                                "type": 4,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "Discount_Rate",
+                            "field": "8",
+                            "dataType": {
+                                "type": 7,
+                                "flags": [
+                                    "UNSIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 53,
+                                "numericScale": 30,
+                                "parameterFormatType": "TwoOrOneOrZero",
+                                "synonyms": [
+                                    "FLOAT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "Exp_Date",
+                            "field": "9",
+                            "dataType": {
+                                "type": 27,
+                                "needsQuotes": true
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        },
+                        {
+                            "title": "total_quantity",
+                            "field": "10",
+                            "dataType": {
+                                "type": 4,
+                                "flags": [
+                                    "SIGNED",
+                                    "ZEROFILL"
+                                ],
+                                "numericPrecision": 10,
+                                "parameterFormatType": "OneOrZero",
+                                "synonyms": [
+                                    "INTEGER",
+                                    "INT4"
+                                ]
+                            },
+                            "inPK": false,
+                            "nullable": false,
+                            "autoIncrement": false
+                        }
+                    ],
+                    "executionInfo": {
+                        "text": "OK, 8 records retrieved in 0.999ms"
+                    },
+                    "totalRowCount": 8,
+                    "hasMoreRows": false,
+                    "currentPage": 0,
+                    "index": 0,
+                    "sql": "\n\n#7. Find the total quantity for each product. (Query)\nselect *, (Quantity_On_hand + Quantity_Sell) total_quantity from product;",
+                    "updatable": true,
+                    "fullTableName": "product"
+                }
+            ]
+        }
+    ]
+}
